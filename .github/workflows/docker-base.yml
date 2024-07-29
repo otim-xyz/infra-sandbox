@@ -48,7 +48,7 @@ jobs:
         with:
           github-token:
             ${{ secrets.GITHUB_TOKEN }}
-          images: ghcr.io/${{ github.repository }}/${{ inputs.image-name }}:latest
+          images: ghcr.io/${{ github.repository }}/${{ inputs.image-name }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=schedule
