@@ -1,0 +1,11 @@
+name: docker
+
+on: [push]
+
+jobs:
+  docker-base:
+    uses: ./.github/workflows/docker-base.yml
+    with:
+      image-name: contracts
+      context: ./contracts
+      dockerfile: ./contracts/Dockerfile
