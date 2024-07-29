@@ -13,13 +13,14 @@ on:
         required: true
         type: string
 
+permissions:
+  packages: write
+  contents: read
+
 jobs:
   docker:
     name: Build and Publish
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     
     steps:
       - name: Checkout repository
