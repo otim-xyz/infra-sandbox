@@ -5,9 +5,13 @@ on: [push]
 jobs:
   docker-base:
     strategy:
+      fail-fast: false
       matrix:
         settings:
-          - dockerfile: ./agents/Dockerfile
+          - dockerfile: ./agents/executor/Dockerfile
+            context: ./agents
+            image-name: agents
+          - dockerfile: ./agents/indexer/Dockerfile
             context: ./agents
             image-name: agents
           - dockerfile: ./contracts/Dockerfile
