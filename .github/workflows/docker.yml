@@ -8,10 +8,10 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          - dockerfile: ./agents/executor/Dockerfile
+          - dockerfile: ./agents/crates/executor/Dockerfile
             context: ./agents
             image-name: agents
-          - dockerfile: ./agents/indexer/Dockerfile
+          - dockerfile: ./agents/crates/indexer/Dockerfile
             context: ./agents
             image-name: agents
           - dockerfile: ./contracts/Dockerfile
