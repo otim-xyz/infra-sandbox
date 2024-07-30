@@ -4,8 +4,18 @@ on: [push]
 
 jobs:
   docker-base:
+    strategy:
+      matrix:
+        settings:
+          - dockerfile: ./agents/Dockerfile
+            context: ./agents
+            image-name: agents
+          - dockerfile: ./contracts/Dockerfile
+            context: ./contracts
+            image-name: contracts
+
     uses: ./.github/workflows/docker-base.yml
     with:
-      image-name: contracts
-      context: ./contracts
-      dockerfile: ./contracts/Dockerfile
+      dockerfile: ${{ matrix.settings.dockerfile }}
+      context: ${{ matrix.settings.context }}
+      image-name: ${{ matrix.settings.image-name }}
