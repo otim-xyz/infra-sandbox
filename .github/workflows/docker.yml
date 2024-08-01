@@ -17,6 +17,9 @@ jobs:
           - dockerfile: ./contracts/Dockerfile
             context: ./contracts
             image-name: contracts
+          - dockerfile: ./chain/Dockerfile
+            context: ./chain
+            image-name: chain
 
     uses: ./.github/workflows/docker-base.yml
     with:

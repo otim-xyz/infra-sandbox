@@ -1,0 +1,17 @@
+# this needs to be part of the infra plan
+
+services:
+  anvil:
+    image: lattejed/anvil
+    platform: linux/amd64
+    ports:
+      - "8545:8545"
+    pull_policy: missing
+    restart: unless-stopped
+
+  deploy:
+    image: lattejed/deployer
+    pull_policy: never
+    restart: no
+    depends_on:
+      - anvil
