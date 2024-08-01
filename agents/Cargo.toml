@@ -30,5 +30,11 @@ all = "warn"
 datastore = { path = "crates/datastore" }
 
 # external dependencies
+alloy = { version = "0.2.0", features = ["full"] }
+aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
+aws-sdk-rdsdata = "1.36.0"
+tokio = { version = "1.39.2", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3.0"
 
 # development dependencies
