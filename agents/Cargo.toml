@@ -3,7 +3,6 @@ members = ["crates/datastore", "crates/executor", "crates/indexer"]
 resolver = "2"
 
 [workspace.package]
-name = "agents"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.79"
@@ -33,6 +32,8 @@ datastore = { path = "crates/datastore" }
 alloy = { version = "0.2.0", features = ["full"] }
 aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
 aws-sdk-rdsdata = "1.36.0"
+eyre = "0.6.12"
+futures-util = "0.3.30"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3.0"
