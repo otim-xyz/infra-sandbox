@@ -9,3 +9,10 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+# workspace dependencies
+
+# external dependencies
+aws-config = { workspace = true }
+aws-sdk-rdsdata = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

@@ -9,6 +9,10 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+# workspace dependencies
+datastore = { workspace = true }
+
+# external dependencies
 alloy = { workspace = true }
 eyre = { workspace = true }
 futures-util = { workspace = true }
