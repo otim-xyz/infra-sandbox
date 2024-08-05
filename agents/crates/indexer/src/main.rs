@@ -1,11 +1,14 @@
 use alloy::{
-    primitives::address, providers::ProviderBuilder, rpc::client::ClientBuilder, sol,
+    primitives::address,
+    providers::{Provider, ProviderBuilder},
+    rpc::client::ClientBuilder,
+    sol,
     transports::http::reqwest::Url,
 };
 use datastore::Datastore;
 use eyre::Result;
 use futures_util::StreamExt;
-use std::time::Duration;
+use std::{future::IntoFuture, time::Duration};
 
 sol! {
     #[sol(rpc)]
@@ -32,36 +35,47 @@ sol! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // let _datastore = Datastore::init().await?;
+
     let rpc_url = Url::parse("http://localhost:8545")?;
     let rpc_client = ClientBuilder::default()
         .http(rpc_url)
         .with_poll_interval(Duration::from_secs(3));
     let provider = ProviderBuilder::new().on_client(rpc_client);
 
+    let block_watch = provider.watch_blocks().await?;
+    let mut block_stream = block_watch.into_stream();
+
+    let handle0 = tokio::spawn(async move {
+        while let Some(block) = block_stream.next().await {
+            println!("Block: {:?}", block);
+        }
+    });
+
     let fibonacci = Fibonacci::new(
         address!("5fbdb2315678afecb367f032d93f642f64180aa3"),
         provider,
     );
 
-    let number_f0_set_filter = fibonacci.NumberF0Set_filter().watch().await?;
-    let number_f1_set_filter = fibonacci.NumberF1Set_filter().watch().await?;
+    // let number_f0_set_filter = fibonacci.NumberF0Set_filter().watch().await?;
+    // let number_f1_set_filter = fibonacci.NumberF1Set_filter().watch().await?;
 
-    let mut number_f0_set_stream = number_f0_set_filter.into_stream();
-    let mut number_f1_set_stream = number_f1_set_filter.into_stream();
+    // let mut number_f0_set_stream = number_f0_set_filter.into_stream();
+    // let mut number_f1_set_stream = number_f1_set_filter.into_stream();
 
-    let handle0 = tokio::spawn(async move {
-        while let Some(Ok((event, _log))) = number_f0_set_stream.next().await {
-            println!("NumberF0Set: {:?}", event);
-            println!("log: {:?}", _log);
-        }
-    });
+    // let handle0 = tokio::spawn(async move {
+    //     while let Some(Ok((event, _log))) = number_f0_set_stream.next().await {
+    //         println!("NumberF0Set: {:?}", event);
+    //         println!("log: {:?}", _log);
+    //     }
+    // });
 
-    let handle1 = tokio::spawn(async move {
-        while let Some(Ok((event, _log))) = number_f1_set_stream.next().await {
-            println!("NumberF1Set: {:?}", event);
-            println!("log: {:?}", _log);
-        }
-    });
+    // let handle1 = tokio::spawn(async move {
+    //     while let Some(Ok((event, _log))) = number_f1_set_stream.next().await {
+    //         println!("NumberF1Set: {:?}", event);
+    //         println!("log: {:?}", _log);
+    //     }
+    // });
 
     let f0_response = fibonacci.f0().call().await?;
     let f1_response = fibonacci.f1().call().await?;
@@ -70,6 +84,6 @@ async fn main() -> Result<()> {
     let _ = fibonacci.setF0F1(f1_response.f1, next_val).send().await?;
 
     handle0.await?;
-    handle1.await?;
+    // handle1.await?;
     Ok(())
 }

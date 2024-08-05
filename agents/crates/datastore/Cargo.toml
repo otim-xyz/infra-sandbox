@@ -14,5 +14,9 @@ workspace = true
 # external dependencies
 aws-config = { workspace = true }
 aws-sdk-rdsdata = { workspace = true }
+bson = { workspace = true }
+chrono = { workspace = true }
+mongodb = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

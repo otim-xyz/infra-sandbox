@@ -32,8 +32,12 @@ datastore = { path = "crates/datastore" }
 alloy = { version = "0.2.0", features = ["full"] }
 aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
 aws-sdk-rdsdata = "1.36.0"
+bson = { version = "2.11.0", features = ["chrono"] }
+chrono = "0.4.38"
 eyre = "0.6.12"
 futures-util = "0.3.30"
+mongodb = { version = "3.0.1", features = ["zstd-compression"] }
+thiserror = "1.0.63"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3.0"
