@@ -10,10 +10,12 @@ workspace = true
 
 [dependencies]
 # workspace dependencies
+contracts = { workspace = true }
 datastore = { workspace = true }
 
 # external dependencies
 alloy = { workspace = true }
+chrono = { workspace = true }
 eyre = { workspace = true }
 futures-util = { workspace = true }
 tokio = { workspace = true }

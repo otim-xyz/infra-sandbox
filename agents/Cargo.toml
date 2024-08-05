@@ -1,5 +1,10 @@
 [workspace]
-members = ["crates/datastore", "crates/executor", "crates/indexer"]
+members = [
+  "crates/contracts",
+  "crates/datastore",
+  "crates/executor",
+  "crates/indexer",
+]
 resolver = "2"
 
 [workspace.package]
@@ -26,17 +31,19 @@ all = "warn"
 
 [workspace.dependencies]
 # workspace dependencies
+contracts = { path = "crates/contracts" }
 datastore = { path = "crates/datastore" }
 
 # external dependencies
 alloy = { version = "0.2.0", features = ["full"] }
 aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
 aws-sdk-rdsdata = "1.36.0"
-bson = { version = "2.11.0", features = ["chrono"] }
+bson = { version = "2.11.0", features = ["chrono-0_4", "serde_with-3"] }
 chrono = "0.4.38"
 eyre = "0.6.12"
 futures-util = "0.3.30"
 mongodb = { version = "3.0.1", features = ["zstd-compression"] }
+serde = { version = "1.0.204", features = ["derive"] }
 thiserror = "1.0.63"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1"

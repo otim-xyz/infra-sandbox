@@ -5,37 +5,16 @@ use alloy::{
     sol,
     transports::http::reqwest::Url,
 };
-use datastore::Datastore;
+use chrono::Utc;
+use contracts::Fibonacci;
+use datastore::{Datastore, FibonacciState};
 use eyre::Result;
 use futures_util::StreamExt;
 use std::{future::IntoFuture, time::Duration};
 
-sol! {
-    #[sol(rpc)]
-    interface Fibonacci {
-        #[derive(Debug)]
-        event NumberF0Set(uint256 f0, uint256 newF0);
-        #[derive(Debug)]
-        event NumberF1Set(uint256 f1, uint256 newF1);
-
-        #[derive(Debug)]
-        error F0NotEqualToF1(uint256 f0, uint256 newF0, uint256 f1);
-        #[derive(Debug)]
-        error F1NotFibonacci(uint256 f0, uint256 f1, uint256 newF1);
-
-        #[derive(Debug)]
-        uint256 public f0 = 0;
-        #[derive(Debug)]
-        uint256 public f1 = 1;
-
-        function setF0F1(uint256 newF0, uint256 newF1) public;
-        function getCurrentValue() public view returns (uint256);
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
-    // let _datastore = Datastore::init().await?;
+    let datastore = Datastore::init().await?;
 
     let rpc_url = Url::parse("http://localhost:8545")?;
     let rpc_client = ClientBuilder::default()
@@ -43,18 +22,18 @@ async fn main() -> Result<()> {
         .with_poll_interval(Duration::from_secs(3));
     let provider = ProviderBuilder::new().on_client(rpc_client);
 
-    let block_watch = provider.watch_blocks().await?;
-    let mut block_stream = block_watch.into_stream();
+    // let block_watch = provider.watch_blocks().await?;
+    // let mut block_stream = block_watch.into_stream();
 
-    let handle0 = tokio::spawn(async move {
-        while let Some(block) = block_stream.next().await {
-            println!("Block: {:?}", block);
-        }
-    });
+    // let handle0 = tokio::spawn(async move {
+    //     while let Some(block) = block_stream.next().await {
+    //         println!("Block: {:?}", block);
+    //     }
+    // });
 
     let fibonacci = Fibonacci::new(
         address!("5fbdb2315678afecb367f032d93f642f64180aa3"),
-        provider,
+        provider.clone(),
     );
 
     // let number_f0_set_filter = fibonacci.NumberF0Set_filter().watch().await?;
@@ -77,13 +56,48 @@ async fn main() -> Result<()> {
     //     }
     // });
 
-    let f0_response = fibonacci.f0().call().await?;
-    let f1_response = fibonacci.f1().call().await?;
+    let mut last_block = None;
 
-    let next_val = f0_response.f0 + f1_response.f1;
-    let _ = fibonacci.setF0F1(f1_response.f1, next_val).send().await?;
+    let handle2 = tokio::spawn({
+        let fibonacci = fibonacci.clone();
+        async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                let current_block = provider.get_block_number().await.unwrap();
+                if last_block == Some(current_block) {
+                    continue;
+                }
+                let current_value = fibonacci
+                    .getCurrentValues()
+                    .block(current_block.into())
+                    .call()
+                    .await
+                    .unwrap();
+                let result = datastore
+                    .add_state(FibonacciState {
+                        id: None,
+                        timestamp: Utc::now(),
+                        address: format!("{}", fibonacci.address()),
+                        block_number: current_block,
+                        f0: current_value._0,
+                        f1: current_value._1,
+                    })
+                    .await;
+                last_block = Some(current_block);
+                println!("{:?}", result);
+            }
+        }
+    });
 
-    handle0.await?;
+    let current_values = fibonacci.getCurrentValues().call().await?;
+    let next_val = current_values._0 + current_values._1;
+    let _ = fibonacci
+        .setF0F1(current_values._1, next_val)
+        .send()
+        .await?;
+
+    // handle0.await?;
     // handle1.await?;
+    handle2.await?;
     Ok(())
 }

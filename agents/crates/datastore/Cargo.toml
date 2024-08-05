@@ -12,11 +12,13 @@ workspace = true
 # workspace dependencies
 
 # external dependencies
+alloy = { workspace = true }
 aws-config = { workspace = true }
 aws-sdk-rdsdata = { workspace = true }
 bson = { workspace = true }
 chrono = { workspace = true }
 mongodb = { workspace = true }
+serde = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

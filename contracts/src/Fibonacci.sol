@@ -8,8 +8,8 @@ contract Fibonacci {
     error F0NotEqualToF1(uint256 f0, uint256 newF0, uint256 f1);
     error F1NotFibonacci(uint256 f0, uint256 f1, uint256 newF1);
 
-    uint256 public f0 = 0;
-    uint256 public f1 = 1;
+    uint256 private f0 = 0;
+    uint256 private f1 = 1;
 
     function setF0F1(uint256 newF0, uint256 newF1) public {
         if (newF0 != f1) {
@@ -25,7 +25,7 @@ contract Fibonacci {
         f1 = newF1;
     }
 
-    function getCurrentValue() public view returns (uint256) {
-        return f1;
+    function getCurrentValues() public view returns (uint256, uint256) {
+        return (f0, f1);
     }
 }

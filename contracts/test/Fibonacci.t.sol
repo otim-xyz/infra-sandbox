@@ -12,9 +12,11 @@ contract FibonacciTest is Test {
     }
 
     function test_GoodSequence() public {
-        uint256 nextValue = fibonacci.f0() + fibonacci.f1();
-        fibonacci.setF0F1(fibonacci.f1(), nextValue);
-        assertEq(fibonacci.getCurrentValue(), nextValue);
+        (uint256 f0, uint256 f1) = fibonacci.getCurrentValues();
+        uint256 nextValue = f0 + f1;
+        fibonacci.setF0F1(f1, nextValue);
+        (, uint256 contractValue) = fibonacci.getCurrentValues();
+        assertEq(contractValue, nextValue);
     }
 
     function test_BadF0() public {

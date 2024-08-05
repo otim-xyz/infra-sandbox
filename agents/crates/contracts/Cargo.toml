@@ -1,0 +1,15 @@
+[package]
+name = "contracts"
+
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# workspace dependencies
+
+# external dependencies
+alloy = { workspace = true }
