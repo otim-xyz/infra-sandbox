@@ -7,96 +7,71 @@ terraform {
   }
 }
 
+variable "tailscale_authkey" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
 provider "aws" {
   region  = "ap-northeast-1"
   profile = "dev"
 }
 
-data "aws_availability_zones" "available" {
-  state = "available"
+data "aws_vpc" "default" {
+  default = true
 }
 
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+resource "aws_security_group" "tailscale_test_sg" {
+  name   = "tailscale_test_sg"
+  vpc_id = data.aws_vpc.default.id
 
-  name = "stw-vpc"
-  cidr = "10.0.0.0/16"
-
-  azs             = data.aws_availability_zones.available.names
-  private_subnets = ["10.0.0.0/22", "10.0.4.0/22", "10.0.8.0/22"]
-  public_subnets  = ["10.0.100.0/22", "10.0.104.0/22", "10.0.108.0/22"]
-
-  enable_nat_gateway = true
-  single_nat_gateway = true
-  enable_vpn_gateway = false
-}
-
-locals {
-  vpc_id              = module.vpc.vpc_id
-  vpc_cidr            = module.vpc.vpc_cidr_block
-  public_subnets_ids  = module.vpc.public_subnets
-  private_subnets_ids = module.vpc.private_subnets
-  subnets_ids         = concat(local.public_subnets_ids, local.private_subnets_ids)
-}
-
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.0"
-
-  cluster_name    = "stw-cluster"
-  cluster_version = "1.25"
-
-  cluster_endpoint_public_access = true
-
-  cluster_addons = {
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent              = true
-      before_compute           = true
-      service_account_role_arn = module.vpc_cni_irsa.iam_role_arn
-      configuration_values = jsonencode({
-        env = {
-          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-        }
-      })
-    }
+  ingress {
+    description = "All private ingress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [data.aws_vpc.default.cidr_block]
   }
 
-  vpc_id                   = local.vpc_id
-  subnet_ids               = local.subnets_ids
-  control_plane_subnet_ids = local.private_subnets_ids
-
-  eks_managed_node_group_defaults = {
-    ami                        = "ami-0162fe8bfebb6ea16"
-    instance_type              = "t2.micro"
-    iam_role_attach_cni_policy = true
-  }
-
-  eks_managed_node_groups = {
-    stw_node_wg = {
-      min_size     = 0
-      max_size     = 3
-      desired_size = 1
-    }
+  egress {
+    description = "All egress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-module "vpc_cni_irsa" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
-
-  role_name_prefix      = "VPC-CNI-IRSA"
-  attach_vpc_cni_policy = true
-  vpc_cni_enable_ipv4   = true
-
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:aws-node"]
-    }
+resource "aws_instance" "tailscale_test" {
+  ami                         = "ami-0b9593848b0f1934e"
+  instance_type               = "t2.micro"
+  key_name                    = "matthew@technocore"
+  vpc_security_group_ids      = [aws_security_group.tailscale_test_sg.id]
+  associate_public_ip_address = false
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = "30"
+    delete_on_termination = true
   }
+  tags = {
+    Name = "Tailscale Test"
+  }
+  user_data_replace_on_change = true
+  user_data = <<EOF
+#!/bin/bash
+
+${templatefile("${path.module}/scripts/install-tailscale.sh", {
+  tailscale_authkey  = var.tailscale_authkey
+  tailscale_hostname = "dev-infra-sandbox-tailscale-test"
+})}
+
+${templatefile("${path.module}/scripts/install-node-exporter.sh", {})}
+
+${templatefile("${path.module}/scripts/install-docker.sh", {})}
+
+# echo '${templatefile("${path.module}/../monitoring/docker-compose.yml", {})}' \
+#   > /home/ec2-user/docker-compose.yml
+
+EOF
 }
