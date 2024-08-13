@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# install docker
+set -e
 
 sudo dnf install docker -y
 sudo systemctl start docker

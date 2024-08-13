@@ -101,3 +101,51 @@ async fn main() -> Result<()> {
     handle2.await?;
     Ok(())
 }
+
+/*
+tokio = { version = "1.39.2", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3.0"
+tracing-journald = "0.3.0"
+
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Mutex;
+use tracing::info;
+use tracing_subscriber::prelude::*;
+
+#[tokio::main]
+async fn main() {
+    let journald = tracing_journald::layer()
+        .expect("journald subscriber")
+        .with_syslog_identifier("otim-offchain".to_owned());
+
+    tracing_subscriber::registry().with(journald).init();
+
+    let count = Arc::new(Mutex::new(0u32));
+
+    let handle = tokio::spawn(async move {
+        loop {
+            increment(count.clone()).await;
+        }
+    });
+
+    handle.await.unwrap();
+}
+
+#[tracing::instrument(skip_all)]
+async fn increment(count: Arc<Mutex<u32>>) {
+    let mut count = count.lock().await;
+    info!(count = %*count, "incremented count {}", *count);
+    *count += 1;
+    tokio::time::sleep(Duration::from_secs(2)).await;
+}
+
+# install vector
+
+# from(bucket: "tracing")
+#   |> range(start: -10m)
+#   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+#   |> drop(columns: ["_measurement", "metric_type", "source_type", "syslog_identifier"])
+#   |> sort(columns: ["_time"], desc: true)
+*/

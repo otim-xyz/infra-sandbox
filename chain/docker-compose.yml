@@ -2,16 +2,17 @@
 
 services:
   anvil:
-    image: lattejed/anvil
+    image: ghcr.io/otim-xyz/infra-sandbox/chain:main
     platform: linux/amd64
     ports:
       - "8545:8545"
-    pull_policy: missing
+    pull_policy: always
     restart: unless-stopped
 
   deploy:
-    image: lattejed/deployer
-    pull_policy: never
+    image: ghcr.io/otim-xyz/infra-sandbox/contracts:main
+    platform: linux/amd64
+    pull_policy: always
     restart: no
     depends_on:
       - anvil
