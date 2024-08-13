@@ -2,12 +2,14 @@ use alloy::primitives::U256;
 use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Utc};
 use mongodb::{
-    action::FindOne,
     options::{ClientOptions, IndexOptions},
     Client, Collection, IndexModel,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+const DATABASE_NAME: &str = "indexed-data";
+const DATABASE_TABLE: &str = "fibonacci-state";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FibonacciState {
@@ -32,30 +34,32 @@ pub struct Datastore {
 }
 
 impl Datastore {
-    pub async fn init() -> Result<Datastore, DatastoreError> {
-        let uri = "mongodb://localhost:27017";
+    #[tracing::instrument(skip_all)]
+    pub async fn init(uri: &str) -> Result<Self, DatastoreError> {
         let options = ClientOptions::parse(uri).await?;
         let client = Client::with_options(options)?;
-        let db = client.database("test");
-        let collection: Collection<FibonacciState> = db.collection("state");
+        let db = client.database(DATABASE_NAME);
+        let collection: Collection<FibonacciState> = db.collection(DATABASE_TABLE);
         let index_model = IndexModel::builder()
             .keys(doc! { "address": 1, "block_number": 1 })
             .options(IndexOptions::builder().unique(true).build())
             .build();
         collection.create_index(index_model).await?;
-        Ok(Datastore { client })
+        Ok(Self { client })
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn add_state(&self, state: FibonacciState) -> Result<(), DatastoreError> {
-        let db = self.client.database("test");
-        let collection = db.collection("state");
+        let db = self.client.database(DATABASE_NAME);
+        let collection = db.collection(DATABASE_TABLE);
         collection.insert_one(state).await?;
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_most_recent_state(&self) -> Result<Option<FibonacciState>, DatastoreError> {
-        let db = self.client.database("test");
-        let collection = db.collection("state");
+        let db = self.client.database(DATABASE_NAME);
+        let collection = db.collection(DATABASE_TABLE);
         let state = collection
             .find_one(doc! {})
             .sort(doc! { "block_number": -1 })

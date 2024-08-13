@@ -42,11 +42,13 @@ bson = { version = "2.11.0", features = ["chrono-0_4", "serde_with-3"] }
 chrono = "0.4.38"
 eyre = "0.6.12"
 futures-util = "0.3.30"
+hex = "0.4.3"
 mongodb = { version = "3.0.1", features = ["zstd-compression"] }
 serde = { version = "1.0.204", features = ["derive"] }
 thiserror = "1.0.63"
 tokio = { version = "1.39.2", features = ["full"] }
 tracing = "0.1"
+tracing-journald = "0.3.0"
 tracing-subscriber = "0.3.0"
 
 # development dependencies

@@ -1,50 +1,77 @@
 use alloy::{
-    primitives::address,
-    providers::{Provider, ProviderBuilder},
-    rpc::client::ClientBuilder,
-    sol,
+    primitives::Address, providers::ProviderBuilder, rpc::client::ClientBuilder,
     transports::http::reqwest::Url,
 };
-use chrono::Utc;
 use contracts::Fibonacci;
 use datastore::{Datastore, FibonacciState};
 use eyre::Result;
-use futures_util::StreamExt;
-use std::{future::IntoFuture, time::Duration};
+use std::{env, time::Duration};
+use tokio::time::sleep;
+use tracing::{debug, error};
+use tracing_subscriber::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let datastore = Datastore::init().await?;
+    let syslog_identifier =
+        env::var("OTIM_SYSLOG_IDENTIFIER").expect("missing OTIM_SYSLOG_IDENTIFIER");
 
-    let rpc_url = Url::parse("http://localhost:8545")?;
-    let rpc_client = ClientBuilder::default()
-        .http(rpc_url)
-        .with_poll_interval(Duration::from_secs(3));
+    let documentdb_url = env::var("OTIM_DOCUMENTDB_URL").expect("missing OTIM_DOCUMENTDB_URL");
+
+    let rpc_url = env::var("OTIM_RPC_URL").expect("missing OTIM_RPC_URL");
+
+    let fibonacci_address =
+        hex::decode(env::var("OTIM_FIBONACCI_ADDRESS").expect("missing OTIM_FIBONACCI_ADDRESS"))
+            .expect("OTIM_FIBONACCI_ADDRESS bad hex");
+
+    let poll_interval = env::var("OTIM_POLL_INTERVAL")
+        .expect("missing OTIM_POLL_INTERVAL")
+        .parse::<u64>()
+        .expect("OTIM_POLL_INTERVAL bad integer");
+
+    let journald = tracing_journald::layer()
+        .expect("journald subscriber not found")
+        .with_syslog_identifier(syslog_identifier);
+
+    tracing_subscriber::registry().with(journald).init();
+
+    let journald = tracing_journald::layer()
+        .expect("journald subscriber")
+        .with_syslog_identifier("otim-offchain".to_owned());
+
+    tracing_subscriber::registry().with(journald).init();
+
+    let datastore = Datastore::init(&documentdb_url).await?;
+
+    let rpc_url = Url::parse(&rpc_url)?;
+    let rpc_client = ClientBuilder::default().http(rpc_url);
     let provider = ProviderBuilder::new().on_client(rpc_client);
 
-    let fibonacci = Fibonacci::new(
-        address!("5fbdb2315678afecb367f032d93f642f64180aa3"),
-        provider.clone(),
-    );
+    let fibonacci = Fibonacci::new(Address::from_slice(&fibonacci_address), provider.clone());
 
-    let handle = tokio::spawn({
-        let fibonacci = fibonacci.clone();
-        async move {
-            loop {
-                tokio::time::sleep(Duration::from_secs(2)).await;
-                let current_values = fibonacci.getCurrentValues().call().await.unwrap();
-                let next_value = current_values._0 + current_values._1;
-                if let Ok(Some(state)) = datastore.get_most_recent_state().await {
-                    if state.f1 < next_value {
-                        let call = fibonacci.setF0F1(current_values._1, next_value);
-                        let result = call.send().await;
-                        println!("{:?}", result);
-                    }
-                }
+    loop {
+        sleep(Duration::from_secs(poll_interval)).await;
+
+        let most_recent_state = match datastore.get_most_recent_state().await {
+            Ok(Some(state)) => state,
+            Ok(None) => {
+                debug!("no recent state found");
+                continue;
+            }
+            Err(e) => {
+                error!("failed to get recent state: {:?}", e);
+                continue;
+            }
+        };
+
+        let FibonacciState { f0, f1, .. } = most_recent_state;
+
+        let next_value = f0 + f1;
+
+        match fibonacci.setF0F1(f1, next_value).send().await {
+            Ok(_) => debug!("updated fibonacci contract {}", next_value),
+            Err(e) => {
+                error!("failed to update fibonacci contract: {:?}", e);
             }
         }
-    });
-
-    handle.await?;
-    Ok(())
+    }
 }
