@@ -6,7 +6,7 @@ ENV MNEMONIC="test test test test test test test test test test test tell"
 ENV HOST="0.0.0.0"
 ENV PORT="8545"
 ENV HARDFORK="prague"
-ENV BLOCK_TIME="1"
+ENV BLOCK_TIME="5"
 
 ENTRYPOINT anvil \
   --block-time "$BLOCK_TIME" \
