@@ -8,10 +8,12 @@ use eyre::Result;
 use std::{env, time::Duration};
 use tokio::time::sleep;
 use tracing::{debug, error};
+#[cfg(target_os = "linux")]
 use tracing_subscriber::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    #[cfg(target_os = "linux")]
     let syslog_identifier =
         env::var("OTIM_SYSLOG_IDENTIFIER").expect("missing OTIM_SYSLOG_IDENTIFIER");
 
@@ -28,17 +30,15 @@ async fn main() -> Result<()> {
         .parse::<u64>()
         .expect("OTIM_POLL_INTERVAL bad integer");
 
+    #[cfg(target_os = "linux")]
     let journald = tracing_journald::layer()
         .expect("journald subscriber not found")
         .with_syslog_identifier(syslog_identifier);
 
+    #[cfg(target_os = "linux")]
     tracing_subscriber::registry().with(journald).init();
-
-    let journald = tracing_journald::layer()
-        .expect("journald subscriber")
-        .with_syslog_identifier("otim-offchain".to_owned());
-
-    tracing_subscriber::registry().with(journald).init();
+    #[cfg(target_os = "macos")]
+    tracing_subscriber::fmt::init();
 
     let datastore = Datastore::init(&documentdb_url).await?;
 

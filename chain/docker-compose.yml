@@ -1,5 +1,3 @@
-# this needs to be part of the infra plan
-
 services:
   anvil:
     image: ghcr.io/otim-xyz/infra-sandbox/chain:main
