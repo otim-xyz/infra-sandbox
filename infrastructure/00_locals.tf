@@ -10,5 +10,5 @@ locals {
 locals {
   syslog_identifier          = "otim-offchain"
   poll_interval              = 2
-  fibonacci_contract_address = "5fbdb2315678afecb367f032d93f642f64180aa3"
+  fibonacci_contract_address = "326d78837ddb62431aae57245899b188f1d02310"
 }

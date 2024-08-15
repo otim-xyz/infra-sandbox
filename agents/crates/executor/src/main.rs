@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
                 continue;
             }
             Err(e) => {
-                error!("failed to get recent state: {:?}", e);
+                error!("failed to get recent state: {}", e);
                 continue;
             }
         };
@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
         match fibonacci.setF0F1(f1, next_value).send().await {
             Ok(_) => debug!("updated fibonacci contract {}", next_value),
             Err(e) => {
-                error!("failed to update fibonacci contract: {:?}", e);
+                error!("failed to update fibonacci contract: {}", e);
             }
         }
     }

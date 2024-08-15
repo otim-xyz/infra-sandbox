@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
         let current_block = match provider.get_block_number().await {
             Ok(block) => block,
             Err(e) => {
-                error!("failed to get block number: {:?}", e);
+                error!("failed to get block number: {}", e);
                 continue;
             }
         };
@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
         {
             Ok(values) => values,
             Err(e) => {
-                error!("failed to get current values: {:?}", e);
+                error!("failed to get current values: {}", e);
                 continue;
             }
         };
@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
         {
             Ok(_) => debug!("stored new state for block {}", current_block),
             Err(e) => {
-                error!("failed to store state: {:?}", e);
+                error!("failed to store state: {}", e);
             }
         }
 
