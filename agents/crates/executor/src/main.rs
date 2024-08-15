@@ -59,6 +59,7 @@ async fn main() -> Result<()> {
     let rpc_url = Url::parse(&rpc_url)?;
     let rpc_client = ClientBuilder::default().http(rpc_url);
     let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
         .wallet(EthereumWallet::from(signer))
         .on_client(rpc_client);
 

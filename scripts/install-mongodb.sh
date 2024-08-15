@@ -43,3 +43,6 @@ sudo mv mongodb.conf /etc/mongod.conf
 sudo systemctl daemon-reload
 sudo systemctl start mongod
 sudo systemctl enable mongod
+
+# sudo dnf erase -qy mongodb-mongosh
+# sudo dnf install -qy mongodb-mongosh-shared-openssl3
