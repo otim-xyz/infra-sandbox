@@ -6,6 +6,4 @@ COPY . .
 
 RUN cargo install --path crates/executor
 
-ENV RUST_LOG=executor=trace
-
-CMD ["executor"]
+ENTRYPOINT RUST_LOG=executor=trace executor

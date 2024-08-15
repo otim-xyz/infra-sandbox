@@ -6,6 +6,4 @@ COPY . .
 
 RUN cargo install --path crates/indexer
 
-ENV RUST_LOG=indexer=trace
-
-CMD ["indexer"]
+ENTRYPOINT RUST_LOG=indexer=trace indexer
