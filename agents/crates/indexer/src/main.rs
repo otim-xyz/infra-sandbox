@@ -13,6 +13,7 @@ use tokio::time::sleep;
 use tracing::{debug, error};
 use tracing_subscriber::{fmt::Layer, prelude::*, EnvFilter};
 
+#[cfg(target_os = "linux")]
 const OTIM_SYSLOG_IDENTIFIER: &str = "otim-offchain";
 
 #[tokio::main]
@@ -20,7 +21,7 @@ async fn main() -> Result<()> {
     #[cfg(target_os = "linux")]
     let journald = tracing_journald::layer()
         .expect("journald subscriber not found")
-        .with_syslog_identifier(OTIM_SYSLOG_IDENTIFIER);
+        .with_syslog_identifier(OTIM_SYSLOG_IDENTIFIER.to_string());
 
     #[cfg(target_os = "linux")]
     tracing_subscriber::registry()
