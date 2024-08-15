@@ -1,6 +1,6 @@
 use alloy::{
-    primitives::Address, providers::ProviderBuilder, rpc::client::ClientBuilder,
-    transports::http::reqwest::Url,
+    network::EthereumWallet, primitives::Address, providers::ProviderBuilder,
+    rpc::client::ClientBuilder, signers::local::PrivateKeySigner, transports::http::reqwest::Url,
 };
 use chrono::Utc;
 use contracts::Fibonacci;
@@ -30,6 +30,11 @@ async fn main() -> Result<()> {
         .parse::<u64>()
         .expect("OTIM_POLL_INTERVAL bad integer");
 
+    let signer: PrivateKeySigner = env::var("OTIM_EXECUTOR_SIGNER_KEY")
+        .expect("missing OTIM_EXECUTOR_SIGNER_KEY")
+        .parse()
+        .expect("unable to parse OTIM_EXECUTOR_SIGNER_KEY");
+
     #[cfg(target_os = "linux")]
     let journald = tracing_journald::layer()
         .expect("journald subscriber not found")
@@ -54,7 +59,9 @@ async fn main() -> Result<()> {
 
     let rpc_url = Url::parse(&rpc_url)?;
     let rpc_client = ClientBuilder::default().http(rpc_url);
-    let provider = ProviderBuilder::new().on_client(rpc_client);
+    let provider = ProviderBuilder::new()
+        .wallet(EthereumWallet::from(signer))
+        .on_client(rpc_client);
 
     let fibonacci = Fibonacci::new(Address::from_slice(&fibonacci_address), provider.clone());
 

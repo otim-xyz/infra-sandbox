@@ -243,11 +243,11 @@ resource "aws_instance" "indexer" {
       "bash /home/ec2-user/install-vector.sh",
       "bash /home/ec2-user/install-docker.sh",
 
-      "echo export OTIM_SYSLOG_IDENTIFIER='${local.syslog_identifier}' >> /home/ec2-user/.env",
+      "echo export OTIM_SYSLOG_IDENTIFIER='${var.syslog_identifier}' >> /home/ec2-user/.env",
       "echo export OTIM_DOCUMENTDB_URL='mongodb://${aws_instance.database.private_ip}:27017' >> /home/ec2-user/.env",
       "echo export OTIM_RPC_URL='http://${aws_instance.chain.private_ip}:8545' >> /home/ec2-user/.env",
-      "echo export OTIM_FIBONACCI_ADDRESS='${local.fibonacci_contract_address}' >> /home/ec2-user/.env",
-      "echo export OTIM_POLL_INTERVAL='${local.poll_interval}' >> /home/ec2-user/.env",
+      "echo export OTIM_FIBONACCI_ADDRESS='${var.fibonacci_contract_address}' >> /home/ec2-user/.env",
+      "echo export OTIM_POLL_INTERVAL='${var.poll_interval}' >> /home/ec2-user/.env",
 
       "sudo docker-compose --file /home/ec2-user/docker-compose.yml up --detach"
     ]
@@ -307,11 +307,11 @@ resource "aws_instance" "executor" {
       "bash /home/ec2-user/install-vector.sh",
       "bash /home/ec2-user/install-docker.sh",
 
-      "echo export OTIM_SYSLOG_IDENTIFIER='${local.syslog_identifier}' >> /home/ec2-user/.env",
+      "echo export OTIM_SYSLOG_IDENTIFIER='${var.syslog_identifier}' >> /home/ec2-user/.env",
       "echo export OTIM_DOCUMENTDB_URL='mongodb://${aws_instance.database.private_ip}:27017' >> /home/ec2-user/.env",
       "echo export OTIM_RPC_URL='http://${aws_instance.chain.private_ip}:8545' >> /home/ec2-user/.env",
-      "echo export OTIM_FIBONACCI_ADDRESS='${local.fibonacci_contract_address}' >> /home/ec2-user/.env",
-      "echo export OTIM_POLL_INTERVAL='${local.poll_interval}' >> /home/ec2-user/.env",
+      "echo export OTIM_FIBONACCI_ADDRESS='${var.fibonacci_contract_address}' >> /home/ec2-user/.env",
+      "echo export OTIM_POLL_INTERVAL='${var.poll_interval}' >> /home/ec2-user/.env",
 
       "sudo docker-compose --file /home/ec2-user/docker-compose.yml up --detach"
     ]
