@@ -229,6 +229,8 @@ resource "aws_instance" "indexer" {
     content     = file("${path.module}/../agents/crates/indexer/docker-compose.yml")
   }
 
+  # TODO: make .env a file with a template
+
   provisioner "remote-exec" {
     inline = [
       "export TAILSCALE_AUTHKEY='${var.tailscale_authkey}'",

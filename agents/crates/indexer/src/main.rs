@@ -11,8 +11,7 @@ use eyre::Result;
 use std::{env, time::Duration};
 use tokio::time::sleep;
 use tracing::{debug, error};
-#[cfg(target_os = "linux")]
-use tracing_subscriber::prelude::*;
+use tracing_subscriber::{fmt::Layer, prelude::*, EnvFilter};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -39,9 +38,19 @@ async fn main() -> Result<()> {
         .with_syslog_identifier(syslog_identifier);
 
     #[cfg(target_os = "linux")]
-    tracing_subscriber::registry().with(journald).init();
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(journald)
+        .with(Layer::new())
+        .init();
+
     #[cfg(target_os = "macos")]
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(Layer::new())
+        .init();
+
+    debug!("indexer started at {}", Utc::now());
 
     let datastore = Datastore::init(&documentdb_url).await?;
 
