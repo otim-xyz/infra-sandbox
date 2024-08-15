@@ -11,11 +11,27 @@ use tokio::time::sleep;
 use tracing::{debug, error};
 use tracing_subscriber::{fmt::Layer, prelude::*, EnvFilter};
 
+const OTIM_SYSLOG_IDENTIFIER: &str = "otim-offchain";
+
 #[tokio::main]
 async fn main() -> Result<()> {
     #[cfg(target_os = "linux")]
-    let syslog_identifier =
-        env::var("OTIM_SYSLOG_IDENTIFIER").expect("missing OTIM_SYSLOG_IDENTIFIER");
+    let journald = tracing_journald::layer()
+        .expect("journald subscriber not found")
+        .with_syslog_identifier(OTIM_SYSLOG_IDENTIFIER);
+
+    #[cfg(target_os = "linux")]
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(journald)
+        .with(Layer::new())
+        .init();
+
+    #[cfg(target_os = "macos")]
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(Layer::new())
+        .init();
 
     let documentdb_url = env::var("OTIM_DOCUMENTDB_URL").expect("missing OTIM_DOCUMENTDB_URL");
 
@@ -34,24 +50,6 @@ async fn main() -> Result<()> {
         .expect("missing OTIM_EXECUTOR_SIGNER_KEY")
         .parse()
         .expect("unable to parse OTIM_EXECUTOR_SIGNER_KEY");
-
-    #[cfg(target_os = "linux")]
-    let journald = tracing_journald::layer()
-        .expect("journald subscriber not found")
-        .with_syslog_identifier(syslog_identifier);
-
-    #[cfg(target_os = "linux")]
-    tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
-        .with(journald)
-        .with(Layer::new())
-        .init();
-
-    #[cfg(target_os = "macos")]
-    tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
-        .with(Layer::new())
-        .init();
 
     debug!("executor started at {}", Utc::now());
 

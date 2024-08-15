@@ -2,8 +2,6 @@
 
 set -e
 
-sudo yum install -y mongodb-mongosh-shared-openssl3
-
 cat <<EOF >mongodb-org-7.0.repo
 [mongodb-org-7.0]
 name=MongoDB Repository

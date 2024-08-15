@@ -13,29 +13,14 @@ use tokio::time::sleep;
 use tracing::{debug, error};
 use tracing_subscriber::{fmt::Layer, prelude::*, EnvFilter};
 
+const OTIM_SYSLOG_IDENTIFIER: &str = "otim-offchain";
+
 #[tokio::main]
 async fn main() -> Result<()> {
     #[cfg(target_os = "linux")]
-    let syslog_identifier =
-        env::var("OTIM_SYSLOG_IDENTIFIER").expect("missing OTIM_SYSLOG_IDENTIFIER");
-
-    let documentdb_url = env::var("OTIM_DOCUMENTDB_URL").expect("missing OTIM_DOCUMENTDB_URL");
-
-    let rpc_url = env::var("OTIM_RPC_URL").expect("missing OTIM_RPC_URL");
-
-    let fibonacci_address =
-        hex::decode(env::var("OTIM_FIBONACCI_ADDRESS").expect("missing OTIM_FIBONACCI_ADDRESS"))
-            .expect("OTIM_FIBONACCI_ADDRESS bad hex");
-
-    let poll_interval = env::var("OTIM_POLL_INTERVAL")
-        .expect("missing OTIM_POLL_INTERVAL")
-        .parse::<u64>()
-        .expect("OTIM_POLL_INTERVAL bad integer");
-
-    #[cfg(target_os = "linux")]
     let journald = tracing_journald::layer()
         .expect("journald subscriber not found")
-        .with_syslog_identifier(syslog_identifier);
+        .with_syslog_identifier(OTIM_SYSLOG_IDENTIFIER);
 
     #[cfg(target_os = "linux")]
     tracing_subscriber::registry()
@@ -49,6 +34,19 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .with(Layer::new())
         .init();
+
+    let documentdb_url = env::var("OTIM_DOCUMENTDB_URL").expect("missing OTIM_DOCUMENTDB_URL");
+
+    let rpc_url = env::var("OTIM_RPC_URL").expect("missing OTIM_RPC_URL");
+
+    let fibonacci_address =
+        hex::decode(env::var("OTIM_FIBONACCI_ADDRESS").expect("missing OTIM_FIBONACCI_ADDRESS"))
+            .expect("OTIM_FIBONACCI_ADDRESS bad hex");
+
+    let poll_interval = env::var("OTIM_POLL_INTERVAL")
+        .expect("missing OTIM_POLL_INTERVAL")
+        .parse::<u64>()
+        .expect("OTIM_POLL_INTERVAL bad integer");
 
     debug!("indexer started at {}", Utc::now());
 

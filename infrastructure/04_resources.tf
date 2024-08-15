@@ -312,6 +312,7 @@ resource "aws_instance" "executor" {
       "echo export OTIM_RPC_URL='http://${aws_instance.chain.private_ip}:8545' >> /home/ec2-user/.env",
       "echo export OTIM_FIBONACCI_ADDRESS='${var.fibonacci_contract_address}' >> /home/ec2-user/.env",
       "echo export OTIM_POLL_INTERVAL='${var.poll_interval}' >> /home/ec2-user/.env",
+      "echo export OTIM_EXECUTOR_SIGNER_KEY='${var.executor_signer_key}' >> /home/ec2-user/.env",
 
       "sudo docker-compose --file /home/ec2-user/docker-compose.yml up --detach"
     ]
