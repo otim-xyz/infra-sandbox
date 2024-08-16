@@ -15,28 +15,24 @@ use tokio::time::sleep;
 use tracing::{debug, error};
 use tracing_subscriber::{fmt::Layer, prelude::*, EnvFilter};
 
-#[cfg(target_os = "linux")]
-const OTIM_SYSLOG_IDENTIFIER: &str = "otim-offchain";
-
 #[tokio::main]
 async fn main() -> Result<()> {
-    #[cfg(target_os = "linux")]
-    let journald = tracing_journald::layer()
-        .expect("journald subscriber not found")
-        .with_syslog_identifier(OTIM_SYSLOG_IDENTIFIER.to_string());
+    let loki_url = Url::parse(&env::var("OTIM_LOKI_URL").expect("missing OTIM_LOKI_URL"))
+        .expect("unable to parse OTIM_LOKI_URL");
 
-    #[cfg(target_os = "linux")]
+    let (loki_layer, loki_task) = tracing_loki::builder()
+        .label("host", "executor")
+        .expect("tracing_loki unallowed label")
+        .build_url(loki_url)
+        .expect("unable to build tracing_loki");
+
     tracing_subscriber::registry()
         .with(EnvFilter::from_default_env())
-        .with(journald)
+        .with(loki_layer)
         .with(Layer::new())
         .init();
 
-    #[cfg(target_os = "macos")]
-    tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
-        .with(Layer::new())
-        .init();
+    _ = tokio::spawn(loki_task);
 
     let documentdb_url = env::var("OTIM_DOCUMENTDB_URL").expect("missing OTIM_DOCUMENTDB_URL");
 

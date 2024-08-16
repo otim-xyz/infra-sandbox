@@ -34,3 +34,7 @@ sudo systemctl set-environment INFLUXDB_API_TOKEN="$(influx auth list --json | j
 
 # set up for tofu remote data source
 influx auth list --json | jq --raw-output '.[1].token' >/home/ec2-user/influxdb_api_token
+
+# set up for grafana
+INFLUXDB_API_TOKEN="$(influx auth list --json | jq --raw-output '.[1].token')"
+export INFLUXDB_API_TOKEN

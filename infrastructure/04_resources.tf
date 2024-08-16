@@ -30,7 +30,7 @@ resource "aws_security_group" "main_sg" {
 
 resource "aws_instance" "monitoring" {
   ami                    = "ami-0b9593848b0f1934e"
-  instance_type          = "t2.micro"
+  instance_type          = "t2.large"
   key_name               = "matthew@technocore"
   vpc_security_group_ids = [aws_security_group.main_sg.id]
   root_block_device {
@@ -60,6 +60,11 @@ resource "aws_instance" "monitoring" {
   }
 
   provisioner "file" {
+    destination = "/home/ec2-user/install-grafana.sh"
+    content     = file("${path.module}/../scripts/install-grafana.sh")
+  }
+
+  provisioner "file" {
     destination = "/home/ec2-user/install-vector.sh"
     content     = file("${path.module}/../scripts/install-vector.sh")
   }
@@ -74,6 +79,7 @@ resource "aws_instance" "monitoring" {
 
       "bash /home/ec2-user/install-tailscale.sh",
       "bash /home/ec2-user/install-influxdb.sh",
+      "bash /home/ec2-user/install-grafana.sh",
       "bash /home/ec2-user/install-vector.sh"
     ]
   }
@@ -232,7 +238,7 @@ resource "aws_instance" "executor" {
   provisioner "file" {
     destination = "/home/ec2-user/.env"
     content = templatefile("${path.module}/templates/executor-env.tftpl", {
-      syslog_identifier          = var.syslog_identifier,
+      monitoring_private_ip      = aws_instance.monitoring.private_ip,
       database_private_ip        = aws_instance.database.private_ip,
       chain_private_ip           = aws_instance.chain.private_ip,
       fibonacci_contract_address = var.fibonacci_contract_address,

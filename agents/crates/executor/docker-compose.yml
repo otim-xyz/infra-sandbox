@@ -7,7 +7,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     environment:
-      - OTIM_SYSLOG_IDENTIFIER=$OTIM_SYSLOG_IDENTIFIER
+      - OTIM_LOKI_URL=$OTIM_LOKI_URL
       - OTIM_DOCUMENTDB_URL=$OTIM_DOCUMENTDB_URL
       - OTIM_RPC_URL=$OTIM_RPC_URL
       - OTIM_FIBONACCI_ADDRESS=$OTIM_FIBONACCI_ADDRESS

@@ -22,4 +22,5 @@ hex = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-journald = { workspace = true }
+tracing-loki = { workspace = true }
 tracing-subscriber = { workspace = true }
