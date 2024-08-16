@@ -11,9 +11,6 @@ jobs:
           - dockerfile: ./agents/crates/executor/Dockerfile
             context: ./agents
             image-name: executor
-          - dockerfile: ./agents/crates/indexer/Dockerfile
-            context: ./agents
-            image-name: indexer
           - dockerfile: ./contracts/Dockerfile
             context: ./contracts
             image-name: contracts

@@ -188,72 +188,6 @@ resource "aws_instance" "chain" {
   }
 }
 
-resource "aws_instance" "indexer" {
-  ami                    = "ami-0b9593848b0f1934e"
-  instance_type          = "t2.micro"
-  key_name               = "matthew@technocore"
-  vpc_security_group_ids = [aws_security_group.main_sg.id]
-  root_block_device {
-    volume_type           = "gp2"
-    volume_size           = "30"
-    delete_on_termination = true
-  }
-  tags = {
-    Name = "${local.name_prefix}-indexer"
-  }
-
-  connection {
-    type        = "ssh"
-    host        = self.public_ip
-    user        = "ec2-user"
-    private_key = file("~/.ssh/id_ed25519")
-  }
-
-  provisioner "file" {
-    destination = "/home/ec2-user/install-tailscale.sh"
-    content     = file("${path.module}/../scripts/install-tailscale.sh")
-  }
-
-  provisioner "file" {
-    destination = "/home/ec2-user/install-vector.sh"
-    content     = file("${path.module}/../scripts/install-vector.sh")
-  }
-
-  provisioner "file" {
-    destination = "/home/ec2-user/install-docker.sh"
-    content     = file("${path.module}/../scripts/install-docker.sh")
-  }
-
-  provisioner "file" {
-    destination = "/home/ec2-user/docker-compose.yml"
-    content     = file("${path.module}/../agents/crates/indexer/docker-compose.yml")
-  }
-
-  # TODO: make .env a file with a template
-
-  provisioner "remote-exec" {
-    inline = [
-      "export TAILSCALE_AUTHKEY='${var.tailscale_authkey}'",
-      "export TAILSCALE_HOSTNAME='${self.tags.Name}'",
-
-      "sudo systemctl set-environment INFLUXDB_HOST='${aws_instance.monitoring.private_ip}'",
-      "sudo systemctl set-environment INFLUXDB_API_TOKEN='${local.influxdb_api_token}'",
-
-      "bash /home/ec2-user/install-tailscale.sh",
-      "bash /home/ec2-user/install-vector.sh",
-      "bash /home/ec2-user/install-docker.sh",
-
-      "echo export OTIM_SYSLOG_IDENTIFIER='${var.syslog_identifier}' >> /home/ec2-user/.env",
-      "echo export OTIM_DOCUMENTDB_URL='mongodb://${aws_instance.database.private_ip}:27017' >> /home/ec2-user/.env",
-      "echo export OTIM_RPC_URL='http://${aws_instance.chain.private_ip}:8545' >> /home/ec2-user/.env",
-      "echo export OTIM_FIBONACCI_ADDRESS='${var.fibonacci_contract_address}' >> /home/ec2-user/.env",
-      "echo export OTIM_POLL_INTERVAL='${var.poll_interval}' >> /home/ec2-user/.env",
-
-      "sudo docker-compose --file /home/ec2-user/docker-compose.yml up --detach"
-    ]
-  }
-}
-
 resource "aws_instance" "executor" {
   ami                    = "ami-0b9593848b0f1934e"
   instance_type          = "t2.micro"
@@ -295,6 +229,18 @@ resource "aws_instance" "executor" {
     content     = file("${path.module}/../agents/crates/executor/docker-compose.yml")
   }
 
+  provisioner "file" {
+    destination = "/home/ec2-user/.env"
+    content = templatefile("${path.module}/templates/executor-env.tftpl", {
+      syslog_identifier          = var.syslog_identifier,
+      database_private_ip        = aws_instance.database.private_ip,
+      chain_private_ip           = aws_instance.chain.private_ip,
+      fibonacci_contract_address = var.fibonacci_contract_address,
+      poll_interval              = var.poll_interval,
+      executor_signer_key        = var.executor_signer_key
+    })
+  }
+
   provisioner "remote-exec" {
     inline = [
       "export TAILSCALE_AUTHKEY='${var.tailscale_authkey}'",
@@ -306,13 +252,6 @@ resource "aws_instance" "executor" {
       "bash /home/ec2-user/install-tailscale.sh",
       "bash /home/ec2-user/install-vector.sh",
       "bash /home/ec2-user/install-docker.sh",
-
-      "echo export OTIM_SYSLOG_IDENTIFIER='${var.syslog_identifier}' >> /home/ec2-user/.env",
-      "echo export OTIM_DOCUMENTDB_URL='mongodb://${aws_instance.database.private_ip}:27017' >> /home/ec2-user/.env",
-      "echo export OTIM_RPC_URL='http://${aws_instance.chain.private_ip}:8545' >> /home/ec2-user/.env",
-      "echo export OTIM_FIBONACCI_ADDRESS='${var.fibonacci_contract_address}' >> /home/ec2-user/.env",
-      "echo export OTIM_POLL_INTERVAL='${var.poll_interval}' >> /home/ec2-user/.env",
-      "echo export OTIM_EXECUTOR_SIGNER_KEY='${var.executor_signer_key}' >> /home/ec2-user/.env",
 
       "sudo docker-compose --file /home/ec2-user/docker-compose.yml up --detach"
     ]

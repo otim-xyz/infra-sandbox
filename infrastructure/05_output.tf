@@ -27,14 +27,6 @@ output "chain_public_ip" {
   value = aws_instance.chain.public_ip
 }
 
-output "indexer_private_ip" {
-  value = aws_instance.indexer.private_ip
-}
-
-output "indexer_public_ip" {
-  value = aws_instance.indexer.public_ip
-}
-
 output "executor_private_ip" {
   value = aws_instance.executor.private_ip
 }
