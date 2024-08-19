@@ -22,6 +22,9 @@ sudo mv grafana.repo /etc/yum.repos.d/grafana.repo
 
 sudo dnf install grafana -y
 
+INFLUXDB_API_TOKEN="$(influx auth list --json | jq --raw-output '.[1].token')"
+export INFLUXDB_API_TOKEN
+
 cat <<EOF >influxdb-datasource.yaml
 apiVersion: 1
 
